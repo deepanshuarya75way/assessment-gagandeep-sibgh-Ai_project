@@ -2,8 +2,9 @@ import axios from "axios";
 import { graph } from "../graph/graph.js";
 import { addMessage } from "../config/memory.js";
 import redis from "../shared/redis/redis.js";
+import { detectAgent } from "../config/detectAgent.js";
 
-export const agent = async (req, res, next) => {
+export const agent = async (req, res, io) => {
     try {
         const {prompt, conversationId, agent} = req.body
         const file=req.file
@@ -19,6 +20,19 @@ export const agent = async (req, res, next) => {
             });
         } catch (saveErr) {
             console.error("Failed to save user message to chat service:", saveErr.message || saveErr);
+        }
+
+        const requiredAgent = await detectAgent(prompt)
+        console.log(requiredAgent)
+        if (agent !== requiredAgent) {
+            console.log("not matched")
+            io.emit("agentMismatch", {
+                message: "choose the required agent",
+                requiredAgent: requiredAgent,
+                currentAgent: agent
+            })
+            return
+            
         }
 
         const result = await graph.invoke({

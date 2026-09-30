@@ -8,6 +8,7 @@ import { setUserData } from "../redux/userSlice";
 import SideBar from "../components/SideBar";
 import ChatArea from "../components/ChatArea";
 import Artifact from "../components/Artifact";
+import { SocketProvider } from "../socket/SocketContext";
 
 const Home = () => {
   const { userData } = useSelector((state) => state.user);
@@ -30,6 +31,7 @@ const Home = () => {
   };
 
   return (
+    
     <div className="h-screen flex bg-[#0d0f14] text-white overflow-hidden">
       <SideBar />
       <ChatArea />
@@ -85,6 +87,7 @@ const Home = () => {
         </div>
       )}
     </div>
+    
   );
 };
 

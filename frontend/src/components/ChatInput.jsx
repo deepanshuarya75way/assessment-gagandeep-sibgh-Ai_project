@@ -23,6 +23,8 @@ import {
   setSelectedConversation,
 } from "../redux/conversationSlice";
 import { updateConversation } from "../features/updateConversation";
+import { useSocket } from "../socket/SocketContext";
+
 
 function ChatInput() {
   const [selectedAgent, setSelectedAgent] = useState("Auto");
@@ -34,6 +36,36 @@ function ChatInput() {
   const recognitionRef = useRef(null)
   const fileRef = useRef(null);
   const dispatch = useDispatch();
+  const { info } = useSocket();
+  const [error, setError] = useState(false)
+
+   // 1. Log the mismatch info and dynamically switch the active agent tab
+  // Find this inside your ChatInput component and update it:
+  // 1. Log the mismatch info and dynamically switch the active agent tab cleanly
+    // 1. Log the mismatch info, turn off loading status, and switch the active agent tab
+  useEffect(() => {
+    console.log("📝 ChatInput re-rendered! Current info state:", info);
+    
+    if (info && info.requiredAgent) {
+      console.log("🎯 Match found! New Agent Data:", info);
+      
+      // 🟢 FIX: Turn off the loading state since the request needs to be re-sent or updated
+      dispatch(setIsloading(false));
+      setError(true)
+
+      // Look up the exact matching case-sensitive item in your agents array
+      const targetAgent = agents.find(
+        (a) => a.id === info.requiredAgent.toLowerCase() || a.label.toLowerCase() === info.requiredAgent.toLowerCase()
+      );
+
+      if (targetAgent) {
+        setSelectedAgent(targetAgent.label);
+      } else {
+        const fallbackLabel = info.requiredAgent.charAt(0).toUpperCase() + info.requiredAgent.slice(1);
+        setSelectedAgent(fallbackLabel);
+      }
+    }
+  }, [info, dispatch]); // Added dispatch to dependency array for best practice React architecture
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -83,6 +115,7 @@ const togglemic = () => {
 }
 
   const handleSendMessage = async () => {
+    setError(false)
     console.log("entered")
     dispatch(setIsloading(true))
     const message = valuee.trim();
@@ -186,6 +219,14 @@ const togglemic = () => {
     <div className="w-full overflow-hidden px-3 md:px-5 py-4 border-t border-white/6 bg-[#0d0f14]">
       <div className="flex flex-col gap-2 bg-white/3 border border-white/[0.07] rounded-2xl px-4 pt-3.5 pb-3">
         <div className="flex w-[80%]  gap-2 pr-2 flex-wrap">
+          <div className="flex w-full text-sm mt-1">
+  {error && (
+    <span className="text-red-500 font-medium">
+      Appropriate agent has been selected
+    </span>
+  )}
+</div>
+
           {agents.map((agent, i) => {
             const isActive = selectedAgent === agent.label;
             const Icon = agent.icon;
